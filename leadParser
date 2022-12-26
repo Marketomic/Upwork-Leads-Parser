@@ -114,17 +114,7 @@ if(lead != NULL)
 	}
 	newDescription = description.getPrefix("Posted On :");
 	updateMap.put("Description",newDescription);
-	if(category.contains("SEO") || category.contains("Search Engine Marketing") || category.contains("Content Strategy") || category.contains("Display Advertising"))
-	{
-		if(budgetNum.toLong() >= 2000 || hourlyMaxNum.toLong() >= 100)
-		{
-			updateMap.put("Status","For Leverage");
-		}
-	}
-	else
-	{
-		updateMap.put("Status","New");
-	}
+	updateMap.put("Status","New");
 	updateMap.put("Category",category);
 	updateMap.put("Skills",skills);
 	if(posted != NULL || posted != "")
