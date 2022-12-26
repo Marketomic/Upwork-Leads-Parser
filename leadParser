@@ -1,0 +1,136 @@
+skills = "";
+category = "";
+hourlyMax = "";
+hourlyMin = "";
+budget = "";
+description = "";
+posted = "";
+postFormatted = "";
+updateMap = Map();
+country = "";
+hourlyMinNum = 0;
+hourlyMaxNum = 0;
+budgetNum = 0;
+lead = zoho.crm.getRecordById("UpWork_Leads",id);
+//NewTag = {"Tag":[{"name":"xxxxxx"}]};
+if(lead != NULL)
+{
+	description = lead.getJSON("Description");
+	if(description.containsIgnoreCase("Country :"))
+	{
+		country = description.getSuffix("Country :").getPrefix("click").trim();
+		updateMap.put("Location",country);
+	}
+	if(description.containsIgnoreCase("Skills :"))
+	{
+		skills = description.getSuffix("Skills :");
+		if(skills != NULL)
+		{
+			if(skills.contains("Country"))
+			{
+				skills = skills.getPrefix("Country :");
+				if(skills.containsIgnoreCase("Location Requirement :"))
+				{
+					skills = skills.getPrefix("Location Requirement :");
+					if(skills.containsIgnoreCase("click to apply"))
+					{
+						skills = skills.getPrefix("click to apply");
+					}
+				}
+			}
+			if(skills.containsIgnoreCase("Location Requirement :"))
+			{
+				skills = skills.getPrefix("Location Requirement :");
+				if(skills.containsIgnoreCase("click to apply"))
+				{
+					skills = skills.getPrefix("click to apply");
+				}
+			}
+			if(skills != NULL)
+			{
+				skills = skills.trim();
+			}
+		}
+	}
+	category = description.getSuffix("Category :").getPrefix("Skills :").trim();
+	jobID = lead.getJSON("Job_URL");
+	if(jobID != "")
+	{
+		jobID = jobID.getSuffix("%7E");
+	}
+	if(jobID != null)
+	{
+		jobID = jobID.getPrefix("?source");
+		updateMap.put("Upwork_Job_ID",jobID);
+	}
+	posted = description.getSuffix("Posted On :");
+	posted = posted.getPrefix("UTC");
+	if(posted != "")
+	{
+		posted = posted.trim();
+		posted = posted.toDateTime().subHour(7).toString("yyyy-MM-dd'T'HH:mm:ss");
+		info posted;
+	}
+	if(description.contains("Hourly Range :"))
+	{
+		range = description.getSuffix("Hourly Range :").getPrefix("Posted On").trim();
+		if(range != NULL)
+		{
+			if(range.contains("-"))
+			{
+				hourlyMin = range.getPrefix("-").replaceAll("\$","").trim();
+				hourlyMinNum = hourlyMin.toLong();
+				hourlyMax = range.getSuffix("-").replaceAll("\$","").trim();
+				hourlyMaxNum = hourlyMax.toNumber();
+				info hourlyMin;
+				info hourlyMax;
+			}
+			else if(range.notContains("-"))
+			{
+				hourlyMaxNum = range.replaceAll("\$","").toNumber().trim();
+				info hourlyMaxNum;
+			}
+		}
+		if(description.containsIgnoreCase("Today"))
+		{
+			updateMap.put("Today",true);
+		}
+		compensation = "Hourly";
+		updateMap.put("Compensation",compensation);
+		newDescription = description.getPrefix("Hourly :");
+		updateMap.put("Description",newDescription);
+		updateMap.put("Hourly_Min",hourlyMinNum);
+		updateMap.put("Hourly_Max",hourlyMaxNum);
+	}
+	else if(description.contains("Budget :"))
+	{
+		budgetNum = description.getSuffix("Budget :").getPrefix("Posted On").getAlphaNumeric().toNumber();
+		info budget;
+		compensation = "Project";
+		updateMap.put("Compensation",compensation);
+		updateMap.put("Budget",budgetNum);
+		newDescription = description.getPrefix("Budget :");
+		updateMap.put("Description",newDescription);
+	}
+	newDescription = description.getPrefix("Posted On :");
+	updateMap.put("Description",newDescription);
+	if(category.contains("SEO") || category.contains("Search Engine Marketing") || category.contains("Content Strategy") || category.contains("Display Advertising"))
+	{
+		if(budgetNum.toLong() >= 2000 || hourlyMaxNum.toLong() >= 100)
+		{
+			updateMap.put("Status","For Leverage");
+		}
+	}
+	else
+	{
+		updateMap.put("Status","New");
+	}
+	updateMap.put("Category",category);
+	updateMap.put("Skills",skills);
+	if(posted != NULL || posted != "")
+	{
+		updateMap.put("Posted",posted);
+	}
+	updateLead = zoho.crm.updateRecord("UpWork_Leads",id,updateMap,{"trigger":{"workflow"}});
+	info updateLead;
+}
